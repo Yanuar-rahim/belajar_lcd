@@ -1,0 +1,984 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Belajar LCD 16x2 | Arduino Uno</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📟</text></svg>"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "media",
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ["Poppins", "ui-sans-serif", "system-ui", "sans-serif"],
+              sans: ["Poppins", "ui-sans-serif", "system-ui", "sans-serif"],
+              mono: ["ui-monospace", "Menlo", "Consolas", "monospace"],
+            },
+          },
+        },
+      };
+    </script>
+    <style type="text/tailwindcss">
+      :root {
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      body {
+        @apply bg-slate-50 text-slate-800 font-sans antialiased dark:bg-slate-950 dark:text-slate-200;
+      }
+      .h2 {
+        @apply font-display text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white mb-5;
+      }
+      .h3 {
+        @apply font-display text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-3;
+      }
+      .txt {
+        @apply lg:text-[17px] leading-relaxed text-slate-700 dark:text-slate-300 mb-4;
+      }
+      .list {
+        @apply list-disc pl-5 space-y-2 mb-4 text-slate-700 dark:text-slate-300 marker:text-amber-500;
+      }
+      .steps {
+        @apply list-decimal pl-5 space-y-2 mb-4 text-slate-700 dark:text-slate-300 marker:font-semibold marker:text-amber-600;
+      }
+      .note {
+        @apply rounded-lg border-l-4 border-amber-400 bg-amber-50 dark:bg-amber-400/10 px-4 py-3 mb-5 text-slate-800 dark:text-slate-200;
+      }
+      .tblw {
+        @apply overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 mb-5;
+      }
+      .tblw table {
+        @apply w-full text-left text-sm;
+      }
+      .tblw th {
+        @apply bg-slate-100 dark:bg-slate-900 px-4 py-3 font-semibold text-slate-900 dark:text-white;
+      }
+      .tblw td {
+        @apply px-4 py-3 border-t border-slate-200 dark:border-slate-800 align-top;
+      }
+      .tblw td:first-child {
+        @apply font-medium whitespace-nowrap;
+      }
+      pre {
+        @apply bg-slate-900 text-slate-100 rounded-lg p-4 overflow-x-auto text-[13px] leading-6 font-mono mb-4;
+      }
+      code.i {
+        @apply font-mono text-[0.9em] bg-slate-200/70 dark:bg-slate-800 rounded px-1.5 py-0.5;
+      }
+      a.lnk {
+        @apply text-indigo-700 dark:text-indigo-300 underline underline-offset-2 break-all;
+      }
+      .navb {
+        @apply w-full flex items-center gap-3 text-left px-3 py-2 rounded-md text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800;
+      }
+      .navb[aria-current="true"] {
+        @apply bg-slate-900 text-white dark:bg-amber-400 dark:text-slate-900 font-medium;
+      }
+      .btn {
+        @apply inline-flex items-center rounded-lg px-4 py-2.5 font-medium transition;
+      }
+      .btn-p {
+        @apply bg-slate-900 text-white dark:bg-amber-400 dark:text-slate-900 hover:opacity-90;
+      }
+      .btn-o {
+        @apply border border-slate-300 dark:border-slate-700 hover:bg-slate-200/60 dark:hover:bg-slate-800;
+      }
+      .inp {
+        @apply w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 font-mono text-sm;
+      }
+      .lcd {
+        @apply rounded-xl p-3 sm:p-4 border-4 border-slate-700 bg-emerald-400 transition-colors max-w-full w-fit mb-4;
+        box-shadow: inset 0 0 12px #0004;
+      }
+      .lcd.off {
+        @apply bg-slate-600;
+      }
+      .lcd .row {
+        @apply flex gap-[2px] sm:gap-[3px] mb-[2px] sm:mb-[3px];
+      }
+      .lcd .row:last-child {
+        @apply mb-0;
+      }
+      .lcd .c {
+        @apply w-[15px] h-[24px] sm:w-[26px] sm:h-[38px] rounded-[2px] grid place-items-center font-mono font-bold text-[12px] sm:text-[20px] leading-none bg-emerald-500/60 text-slate-900;
+      }
+      .lcd.off .c {
+        @apply bg-slate-700/60 text-slate-500;
+      }
+      :focus-visible {
+        @apply outline outline-2 outline-offset-2 outline-indigo-500;
+      }
+      section[hidden] {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header
+      class="lg:hidden sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/95 dark:bg-slate-950/95 px-4 py-3"
+    >
+      <button
+        id="menuBtn"
+        class="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm"
+        aria-label="Buka daftar materi"
+        aria-expanded="false"
+      >
+        Materi
+      </button>
+      <span class="font-display font-bold">Belajar LCD</span>
+    </header>
+
+    <div class="lg:grid lg:grid-cols-[280px_minmax(0,1fr)] min-h-screen">
+      <aside
+        id="side"
+        class="fixed lg:sticky top-0 left-0 z-40 h-screen w-72 lg:w-auto -translate-x-full lg:translate-x-0 transition-transform bg-slate-100 dark:bg-slate-900 lg:bg-transparent lg:dark:bg-transparent border-r border-slate-200 dark:border-slate-800 overflow-y-auto p-4"
+        style="padding-top: max(1rem, env(safe-area-inset-top, 0px))"
+      >
+        <a
+          href="#home"
+          class="block font-display text-2xl font-extrabold text-slate-900 dark:text-white mb-1"
+          >Belajar LCD</a
+        >
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+          LCD 16x2 I2C dan Arduino Uno
+        </p>
+        <div class="mb-4">
+          <div
+            class="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1"
+          >
+            <span>Progres belajar</span><span id="pTxt">0%</span>
+          </div>
+          <div
+            class="h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden"
+          >
+            <div id="pBar" class="h-full w-0 bg-amber-400 transition-all"></div>
+          </div>
+        </div>
+        <nav id="nav" class="space-y-0.5" aria-label="Daftar materi"></nav>
+      </aside>
+
+      <main
+        class="px-5 sm:px-10 lg:px-14 xl:px-20 py-8 lg:py-14 w-full min-w-0"
+      >
+        <section id="home" data-title="Beranda">
+          <h1
+            class="font-display text-5xl sm:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.05] mb-5"
+          >
+            Pengenalan LCD 16×2
+          </h1>
+          <p class="txt text-lg">
+            Menampilkan teks dan angka dari Arduino Uno menggunakan LCD karakter
+            dengan modul I2C.
+          </p>
+          <div id="heroLcd" class="lcd" aria-hidden="true"></div>
+          <div class="note">
+            <strong>Tujuan pembelajaran.</strong> Menjelaskan fungsi LCD
+            karakter, mengenali pin LCD dan modul I2C, merangkai ke Arduino Uno,
+            menginstal library, dan menampilkan teks dengan program.
+          </div>
+          <div class="flex flex-wrap gap-3 mt-6">
+            <button class="btn btn-p" data-go="pengenalan">
+              Mulai belajar
+            </button>
+            <button class="btn btn-o" data-go="latihan">
+              Langsung ke latihan
+            </button>
+          </div>
+        </section>
+
+        <section id="pengenalan" data-title="Pengenalan LCD" hidden>
+          <h2 class="h2">Apa itu LCD?</h2>
+          <p class="txt">
+            LCD (Liquid Crystal Display) adalah layar yang memanfaatkan kristal
+            cair untuk menampilkan informasi. Pada praktikum Arduino, jenis yang
+            paling umum adalah <strong>LCD karakter 16×2</strong>: 16 kolom dan
+            2 baris, sehingga dapat menampilkan 32 karakter sekaligus.
+          </p>
+          <p class="txt">
+            Setiap karakter dibentuk dari matriks titik berukuran 5×8. Karena
+            karakter sudah tersimpan di dalam kontrolernya (HD44780), kita cukup
+            mengirim teks tanpa perlu menggambar tiap titik.
+          </p>
+          <ul class="list">
+            <li>
+              <strong>Hemat daya:</strong> LCD tanpa lampu latar membutuhkan
+              arus sangat kecil.
+            </li>
+            <li>
+              <strong>Mudah diprogram:</strong> cukup
+              <code class="i">print()</code> teks pada posisi yang dipilih.
+            </li>
+            <li>
+              <strong>Cocok untuk monitor:</strong> menampilkan suhu, jarak,
+              jam, atau menu sederhana.
+            </li>
+          </ul>
+          <h3 class="h3">Contoh penggunaan</h3>
+          <p class="txt">
+            Termometer digital, penghitung pengunjung, tampilan jam, menu alat,
+            dan indikator status proyek mikrokontroler.
+          </p>
+        </section>
+
+        <section id="cara-kerja" data-title="Cara Kerja" hidden>
+          <h2 class="h2">Bagaimana LCD karakter bekerja?</h2>
+          <p class="txt">
+            Arduino mengirim kode karakter (ASCII) ke kontroler HD44780 di balik
+            layar. Kontroler menyimpan kode itu di memori tampilan dan
+            menggambarnya sebagai pola titik pada posisi yang sesuai.
+          </p>
+          <div class="tblw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Konsep</th>
+                  <th>Penjelasan</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Kolom</td>
+                  <td>Posisi mendatar, bernomor 0 sampai 15 pada LCD 16×2.</td>
+                </tr>
+                <tr>
+                  <td>Baris</td>
+                  <td>Posisi tegak, bernomor 0 (atas) dan 1 (bawah).</td>
+                </tr>
+                <tr>
+                  <td>Kursor</td>
+                  <td>
+                    Posisi tempat karakter berikutnya akan ditulis. Diatur
+                    dengan <code class="i">setCursor(kolom, baris)</code>.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Lampu latar</td>
+                  <td>
+                    Backlight yang membuat tulisan terlihat jelas dalam gelap.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Kontras</td>
+                  <td>
+                    Tingkat gelap tulisan, diatur dengan potensiometer kecil
+                    pada modul.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note">
+            <strong>Catatan.</strong> Tanpa modul I2C, LCD memakai banyak pin
+            (RS, E, D4–D7, dan lainnya). Modul I2C menyederhanakannya menjadi
+            hanya 4 kabel.
+          </div>
+        </section>
+
+        <section id="komponen" data-title="Alat dan Bahan" hidden>
+          <h2 class="h2">Alat dan bahan</h2>
+          <div class="tblw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Komponen</th>
+                  <th>Fungsi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Arduino Uno</td>
+                  <td>
+                    Mikrokontroler yang menjalankan program dan mengirim data ke
+                    LCD.
+                  </td>
+                </tr>
+                <tr>
+                  <td>LCD 16×2</td>
+                  <td>Layar karakter dua baris.</td>
+                </tr>
+                <tr>
+                  <td>Modul I2C (PCF8574)</td>
+                  <td>
+                    Adaptor di belakang LCD yang mengubah koneksi paralel
+                    menjadi I2C.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Kabel jumper</td>
+                  <td>Menghubungkan pin modul ke Arduino.</td>
+                </tr>
+                <tr>
+                  <td>Kabel USB</td>
+                  <td>Daya dan pemrograman dari komputer.</td>
+                </tr>
+                <tr>
+                  <td>Komputer / laptop</td>
+                  <td>Menulis dan mengunggah program lewat Arduino IDE.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="pin" data-title="Pin LCD dan I2C" hidden>
+          <h2 class="h2">Mengenal pin LCD dan modul I2C</h2>
+          <p class="txt">
+            Modul I2C hanya memiliki empat pin yang disambungkan ke Arduino.
+          </p>
+          <div class="tblw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Pin modul I2C</th>
+                  <th>Fungsi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code class="i">GND</code></td>
+                  <td>Ground atau jalur negatif.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">VCC</code></td>
+                  <td>Catu daya positif, umumnya 5V.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">SDA</code></td>
+                  <td>Jalur data I2C.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">SCL</code></td>
+                  <td>Jalur clock I2C.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3 class="h3">Pin LCD tanpa I2C (mode paralel)</h3>
+          <div class="tblw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Pin LCD</th>
+                  <th>Fungsi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code class="i">VSS / VDD</code></td>
+                  <td>Ground dan catu daya 5V.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">V0</code></td>
+                  <td>Pengatur kontras (ke potensiometer).</td>
+                </tr>
+                <tr>
+                  <td><code class="i">RS</code></td>
+                  <td>Memilih mode perintah atau data.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">E</code></td>
+                  <td>Enable, memberi sinyal bahwa data siap dibaca.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">D4–D7</code></td>
+                  <td>Jalur data (mode 4-bit).</td>
+                </tr>
+                <tr>
+                  <td><code class="i">A / K</code></td>
+                  <td>Anoda dan katoda lampu latar.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note">
+            <strong>Perhatikan.</strong> Pastikan tegangan modul sesuai
+            spesifikasi dan periksa label pin pada PCB sebelum menyambungkan
+            kabel.
+          </div>
+        </section>
+
+        <section id="rangkaian" data-title="Rangkaian ke Arduino" hidden>
+          <h2 class="h2">Menghubungkan ke Arduino Uno</h2>
+          <p class="txt">
+            Hubungkan kabel saat Arduino tidak sedang diberi daya.
+          </p>
+          <div class="tblw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Modul I2C</th>
+                  <th>Arduino Uno</th>
+                  <th>Keterangan</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>GND</td>
+                  <td><code class="i">GND</code></td>
+                  <td>Ground</td>
+                </tr>
+                <tr>
+                  <td>VCC</td>
+                  <td><code class="i">5V</code></td>
+                  <td>Catu daya</td>
+                </tr>
+                <tr>
+                  <td>SDA</td>
+                  <td><code class="i">A4</code></td>
+                  <td>Data I2C</td>
+                </tr>
+                <tr>
+                  <td>SCL</td>
+                  <td><code class="i">A5</code></td>
+                  <td>Clock I2C</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note">
+            Pada Arduino Uno, jalur I2C berada pada pin A4 (SDA) dan A5 (SCL).
+            Pada papan lain, pinnya bisa berbeda.
+          </div>
+          <h3 class="h3">Mencari alamat I2C</h3>
+          <p class="txt">
+            Modul I2C umumnya beralamat <code class="i">0x27</code> atau
+            <code class="i">0x3F</code>. Jika layar menyala tetapi tidak ada
+            tulisan, coba alamat lain, atau jalankan sketch
+            <em>I2C Scanner</em> untuk mengetahui alamat sebenarnya.
+          </p>
+        </section>
+
+        <section id="library" data-title="Instalasi Library" hidden>
+          <h2 class="h2">Instalasi library LiquidCrystal I2C</h2>
+          <ol class="steps">
+            <li>Buka Arduino IDE.</li>
+            <li>Pilih <em>Sketch → Include Library → Manage Libraries</em>.</li>
+            <li>Cari <strong>LiquidCrystal I2C</strong>, lalu klik Install.</li>
+            <li>
+              Pilih board <strong>Arduino Uno</strong> dan port yang benar di
+              menu Tools.
+            </li>
+          </ol>
+          <div class="note">
+            <strong>Catatan.</strong> Ada beberapa library dengan nama mirip.
+            Fungsi dasarnya sama, tetapi cara inisialisasi bisa berbeda (<code
+              class="i"
+              >lcd.init()</code
+            >
+            atau <code class="i">lcd.begin()</code>). Ikuti contoh bawaan
+            library yang Anda pasang.
+          </div>
+          <h3 class="h3">Fungsi yang sering dipakai</h3>
+          <div class="tblw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fungsi</th>
+                  <th>Kegunaan</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code class="i">init()</code></td>
+                  <td>Menginisialisasi LCD.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">backlight()</code></td>
+                  <td>Menyalakan lampu latar.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">setCursor(kolom, baris)</code></td>
+                  <td>Memindahkan kursor.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">print(data)</code></td>
+                  <td>Menulis teks atau angka.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">clear()</code></td>
+                  <td>Menghapus seluruh layar.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">scrollDisplayLeft()</code></td>
+                  <td>Menggeser tampilan ke kiri.</td>
+                </tr>
+                <tr>
+                  <td><code class="i">createChar(nomor, pola)</code></td>
+                  <td>Membuat karakter kustom.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="program" data-title="Program Arduino" hidden>
+          <h2 class="h2">Program menampilkan teks</h2>
+          <p class="txt">
+            Contoh memakai alamat <code class="i">0x27</code> dan LCD 16×2. Ubah
+            alamat jika modul Anda berbeda.
+          </p>
+          <div
+            role="tablist"
+            id="codeTabs"
+            class="flex flex-wrap gap-2 mb-3"
+          ></div>
+          <div id="codePanel"></div>
+          <div class="note">
+            <strong>Catatan penting.</strong> Jika layar hanya menampilkan kotak
+            penuh atau kosong, atur kontras dengan memutar potensiometer biru
+            pada modul I2C, lalu periksa alamat I2C.
+          </div>
+        </section>
+
+        <section id="simulasi" data-title="Simulasi LCD" hidden>
+          <h2 class="h2">Simulasi tampilan LCD 16×2</h2>
+          <p class="txt">
+            Ketik teks untuk tiap baris (maksimal 16 karakter). Ini ilustrasi
+            interaktif, bukan emulator rangkaian.
+          </p>
+          <div id="simLcd" class="lcd" aria-live="polite"></div>
+          <div class="grid sm:grid-cols-2 gap-3 mb-4 max-w-2xl">
+            <label class="text-sm"
+              >Baris 0<input
+                id="in0"
+                class="inp mt-1"
+                maxlength="16"
+                value="HALO ARDUINO"
+            /></label>
+            <label class="text-sm"
+              >Baris 1<input
+                id="in1"
+                class="inp mt-1"
+                maxlength="16"
+                value="LCD 16x2 I2C"
+            /></label>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn btn-o" id="bBack">Lampu latar: nyala</button>
+            <button class="btn btn-o" id="bClear">Bersihkan</button>
+            <button class="btn btn-o" id="bDemo">Contoh suhu</button>
+          </div>
+        </section>
+
+        <section id="latihan" data-title="Latihan dan Evaluasi" hidden>
+          <h2 class="h2">Latihan dan evaluasi</h2>
+          <p class="txt">
+            Pilih satu jawaban untuk tiap soal. Jawaban langsung diperiksa.
+          </p>
+          <div id="quiz" class="space-y-6"></div>
+          <div
+            id="score"
+            class="mt-6 flex flex-wrap items-center gap-4"
+            aria-live="polite"
+          ></div>
+        </section>
+
+        <div
+          id="pager"
+          class="mt-12 pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-between gap-3"
+        ></div>
+      </main>
+    </div>
+    <div
+      id="scrim"
+      class="fixed inset-0 z-30 bg-black/40 hidden lg:hidden"
+    ></div>
+
+    <script>
+      const secs = [...document.querySelectorAll("main section")];
+      const ids = secs.map((s) => s.id);
+      const nav = document.getElementById("nav");
+      const side = document.getElementById("side");
+      const scrim = document.getElementById("scrim");
+      let visited = new Set();
+      try {
+        visited = new Set(
+          JSON.parse(localStorage.getItem("lcd-visited") || "[]"),
+        );
+      } catch (e) {}
+
+      secs.slice(1).forEach((s, i) => {
+        const b = document.createElement("button");
+        b.className = "navb";
+        b.dataset.id = s.id;
+        b.innerHTML =
+          '<span class="w-5 text-xs tabular-nums opacity-70">' +
+          (i + 1) +
+          '</span><span class="flex-1">' +
+          s.dataset.title +
+          '</span><span class="tick text-emerald-500 text-xs"></span>';
+        b.onclick = () => go(s.id);
+        nav.appendChild(b);
+      });
+      function progress() {
+        const n = ids.slice(1).filter((id) => visited.has(id)).length;
+        const pct = Math.round((n / (ids.length - 1)) * 100);
+        document.getElementById("pBar").style.width = pct + "%";
+        document.getElementById("pTxt").textContent = pct + "%";
+        nav
+          .querySelectorAll(".navb")
+          .forEach(
+            (b) =>
+              (b.querySelector(".tick").textContent = visited.has(b.dataset.id)
+                ? "✓"
+                : ""),
+          );
+      }
+      function show(id) {
+        if (!ids.includes(id)) id = "home";
+        secs.forEach((s) => (s.hidden = s.id !== id));
+        nav
+          .querySelectorAll(".navb")
+          .forEach((b) => b.setAttribute("aria-current", b.dataset.id === id));
+        if (id !== "home") {
+          visited.add(id);
+          try {
+            localStorage.setItem("lcd-visited", JSON.stringify([...visited]));
+          } catch (e) {}
+        }
+        progress();
+        const i = ids.indexOf(id),
+          p = document.getElementById("pager");
+        const prev = ids[i - 1],
+          next = ids[i + 1];
+        p.innerHTML =
+          (prev
+            ? '<button class="btn btn-o" data-go="' +
+              prev +
+              '">Sebelumnya</button>'
+            : "<span></span>") +
+          (next
+            ? '<button class="btn btn-p" data-go="' +
+              next +
+              '">Berikutnya</button>'
+            : "<span></span>");
+        closeMenu();
+        window.scrollTo(0, 0);
+      }
+      function go(id) {
+        if (location.hash === "#" + id) show(id);
+        else location.hash = id;
+      }
+      window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+      document.addEventListener("click", (e) => {
+        const t = e.target.closest("[data-go]");
+        if (t) go(t.dataset.go);
+      });
+      const menuBtn = document.getElementById("menuBtn");
+      function closeMenu() {
+        side.classList.add("-translate-x-full");
+        scrim.classList.add("hidden");
+        menuBtn.setAttribute("aria-expanded", "false");
+      }
+      menuBtn.onclick = () => {
+        side.classList.remove("-translate-x-full");
+        scrim.classList.remove("hidden");
+        menuBtn.setAttribute("aria-expanded", "true");
+      };
+      scrim.onclick = closeMenu;
+
+      // Tampilan LCD
+      function lcdDraw(el, l0, l1) {
+        el.innerHTML = "";
+        [l0, l1].forEach((t) => {
+          const r = document.createElement("div");
+          r.className = "row";
+          for (let c = 0; c < 16; c++) {
+            const d = document.createElement("div");
+            d.className = "c";
+            d.textContent = (t || "")[c] || "";
+            r.appendChild(d);
+          }
+          el.appendChild(r);
+        });
+      }
+      lcdDraw(
+        document.getElementById("heroLcd"),
+        "HALO ARDUINO",
+        "LCD 16x2 I2C",
+      );
+      const sim = document.getElementById("simLcd"),
+        in0 = document.getElementById("in0"),
+        in1 = document.getElementById("in1");
+      const upd = () => lcdDraw(sim, in0.value, in1.value);
+      in0.oninput = in1.oninput = upd;
+      upd();
+      let bl = true;
+      const bBack = document.getElementById("bBack");
+      bBack.onclick = () => {
+        bl = !bl;
+        sim.classList.toggle("off", !bl);
+        bBack.textContent = "Lampu latar: " + (bl ? "nyala" : "mati");
+      };
+      document.getElementById("bClear").onclick = () => {
+        in0.value = "";
+        in1.value = "";
+        upd();
+      };
+      document.getElementById("bDemo").onclick = () => {
+        in0.value = "Suhu: 28.5 C";
+        in1.value = "Lembab: 65 %";
+        upd();
+      };
+
+      // Tab kode
+      const code = {
+        "Hello World": [
+          "Menampilkan teks dua baris",
+          `#include &lt;Wire.h&gt;
+#include &lt;LiquidCrystal_I2C.h&gt;
+
+// alamat I2C 0x27, 16 kolom, 2 baris
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void setup() {
+  lcd.init();        // inisialisasi LCD
+  lcd.backlight();   // nyalakan lampu latar
+
+  lcd.setCursor(0, 0);       // kolom 0, baris 0
+  lcd.print("HALO ARDUINO");
+
+  lcd.setCursor(0, 1);       // kolom 0, baris 1
+  lcd.print("LCD 16x2 I2C");
+}
+
+void loop() {
+  // tidak ada proses berulang
+}`,
+          '<code class="i">LiquidCrystal_I2C lcd(0x27, 16, 2)</code> membuat objek LCD dengan alamat, jumlah kolom, dan jumlah baris. <code class="i">setCursor()</code> menentukan posisi tulisan, lalu <code class="i">print()</code> menuliskan teks.',
+        ],
+        Counter: [
+          "Menampilkan angka yang berubah",
+          `#include &lt;Wire.h&gt;
+#include &lt;LiquidCrystal_I2C.h&gt;
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+int hitung = 0;
+
+void setup() {
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("Hitungan:");
+}
+
+void loop() {
+  lcd.setCursor(0, 1);
+  lcd.print(hitung);
+  lcd.print("    ");   // hapus sisa angka lama
+  hitung++;
+  delay(1000);
+}`,
+          'Angka lama tidak terhapus otomatis. Karena itu setelah <code class="i">print(hitung)</code> ditambahkan beberapa spasi, atau gunakan <code class="i">clear()</code> bila perlu mengganti seluruh layar.',
+        ],
+        "Teks Berjalan": [
+          "Menggeser tampilan ke kiri",
+          `#include &lt;Wire.h&gt;
+#include &lt;LiquidCrystal_I2C.h&gt;
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void setup() {
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(16, 0);   // mulai di luar layar (kanan)
+  lcd.print("BELAJAR ARDUINO DENGAN LCD");
+}
+
+void loop() {
+  lcd.scrollDisplayLeft();
+  delay(300);
+}`,
+          '<code class="i">scrollDisplayLeft()</code> menggeser seluruh isi layar satu kolom ke kiri setiap dipanggil. Atur <code class="i">delay()</code> untuk mengubah kecepatan geser.',
+        ],
+      };
+      const ctabs = document.getElementById("codeTabs"),
+        cpanel = document.getElementById("codePanel");
+      function codeShow(k) {
+        ctabs.querySelectorAll("button").forEach((b) => {
+          const on = b.dataset.k === k;
+          b.setAttribute("aria-selected", on);
+          b.className = "btn " + (on ? "btn-p" : "btn-o");
+        });
+        const c = code[k];
+        cpanel.innerHTML =
+          '<h3 class="h3 !mt-2">' +
+          c[0] +
+          '</h3><div class="relative"><button id="cpBtn" class="absolute right-2 top-2 rounded-md border border-slate-600 bg-slate-800 text-slate-200 px-2.5 py-1 text-xs hover:bg-slate-700">Salin kode</button><pre><code>' +
+          c[1] +
+          '</code></pre></div><p class="txt">' +
+          c[2] +
+          "</p>";
+        document.getElementById("cpBtn").onclick = (e) => copyCode(e.target);
+      }
+      function copyCode(btn) {
+        const t = btn.parentElement.querySelector("code").innerText;
+        const ok = () => {
+          btn.textContent = "Tersalin!";
+          setTimeout(() => (btn.textContent = "Salin kode"), 1500);
+        };
+        const fb = () => {
+          const a = document.createElement("textarea");
+          a.value = t;
+          document.body.appendChild(a);
+          a.select();
+          try {
+            document.execCommand("copy");
+            ok();
+          } catch (e) {
+            btn.textContent = "Gagal menyalin";
+          }
+          a.remove();
+        };
+        try {
+          navigator.clipboard.writeText(t).then(ok, fb);
+        } catch (e) {
+          fb();
+        }
+      }
+      Object.keys(code).forEach((k) => {
+        const b = document.createElement("button");
+        b.dataset.k = k;
+        b.setAttribute("role", "tab");
+        b.textContent = k;
+        b.onclick = () => codeShow(k);
+        ctabs.appendChild(b);
+      });
+      codeShow("Hello World");
+
+      // Kuis
+      const Q = [
+        [
+          "Berapa jumlah karakter maksimal yang tampil sekaligus pada LCD 16×2?",
+          ["16 karakter", "32 karakter", "64 karakter", "8 karakter"],
+          1,
+        ],
+        [
+          "Pada Arduino Uno, pin SDA dan SCL I2C berada di ...",
+          ["D10 dan D11", "D2 dan D3", "A4 dan A5", "D12 dan D13"],
+          2,
+        ],
+        [
+          "Fungsi untuk memindahkan posisi tulisan adalah ...",
+          ["setCursor()", "backlight()", "clear()", "init()"],
+          0,
+        ],
+        [
+          "Alamat I2C modul LCD yang umum adalah ...",
+          ["0x27 atau 0x3F", "0xFF", "0x00 saja", "0x10 atau 0x20"],
+          0,
+        ],
+        [
+          "Layar menyala tetapi tidak ada tulisan. Hal pertama yang diperiksa adalah ...",
+          [
+            "Mengganti board Arduino",
+            "Kontras dan alamat I2C",
+            "Menghapus library",
+            "Mengganti kabel USB",
+          ],
+          1,
+        ],
+      ];
+      const quiz = document.getElementById("quiz"),
+        scoreEl = document.getElementById("score");
+      let answered = {};
+      function renderQuiz() {
+        answered = {};
+        quiz.innerHTML = "";
+        Q.forEach((q, qi) => {
+          const f = document.createElement("fieldset");
+          f.innerHTML =
+            '<legend class="font-semibold text-slate-900 dark:text-white mb-3">' +
+            (qi + 1) +
+            ". " +
+            q[0] +
+            "</legend>";
+          q[1].forEach((o, oi) => {
+            const b = document.createElement("button");
+            b.className =
+              "opt block w-full text-left rounded-lg border border-slate-300 dark:border-slate-700 px-4 py-2.5 mb-2 hover:bg-slate-200/60 dark:hover:bg-slate-800";
+            b.textContent = "ABCD"[oi] + ". " + o;
+            b.onclick = () => {
+              if (answered[qi] !== undefined) return;
+              answered[qi] = oi;
+              f.querySelectorAll(".opt").forEach((x, xi) => {
+                x.classList.remove(
+                  "hover:bg-slate-200/60",
+                  "dark:hover:bg-slate-800",
+                );
+                if (xi === q[2])
+                  x.classList.add(
+                    "border-emerald-500",
+                    "bg-emerald-100",
+                    "dark:bg-emerald-500/20",
+                  );
+                else if (xi === oi)
+                  x.classList.add(
+                    "border-rose-500",
+                    "bg-rose-100",
+                    "dark:bg-rose-500/20",
+                  );
+              });
+              b.insertAdjacentHTML(
+                "beforeend",
+                oi === q[2]
+                  ? " <strong>(benar)</strong>"
+                  : " <strong>(kurang tepat)</strong>",
+              );
+              updScore();
+            };
+            f.appendChild(b);
+          });
+          quiz.appendChild(f);
+        });
+        updScore();
+      }
+      function updScore() {
+        const done = Object.keys(answered).length;
+        const ok = Object.entries(answered).filter(
+          ([qi, a]) => Q[qi][2] === a,
+        ).length;
+        scoreEl.innerHTML =
+          '<span class="font-display text-2xl font-bold text-slate-900 dark:text-white">Skor: ' +
+          ok +
+          " / " +
+          Q.length +
+          "</span>" +
+          (done === Q.length
+            ? '<span class="text-slate-600 dark:text-slate-400">' +
+              (ok === Q.length
+                ? "Sempurna. Semua jawaban benar."
+                : "Selesai. Baca ulang materi yang masih kurang tepat.") +
+              "</span>"
+            : '<span class="text-slate-500">' +
+              done +
+              " dari " +
+              Q.length +
+              " soal dijawab</span>") +
+          '<button id="resetQ" class="btn btn-o">Ulangi</button>';
+        document.getElementById("resetQ").onclick = renderQuiz;
+      }
+      renderQuiz();
+
+      show(location.hash.slice(1));
+    </script>
+  </body>
+</html>
